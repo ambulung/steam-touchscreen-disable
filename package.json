@@ -1,7 +1,7 @@
 {
-  "name": "decky-plugin-template",
+  "name": "decky-touchscreen-toggle",
   "version": "0.0.1",
-  "description": "A template to quickly create decky plugins from scratch, based on TypeScript and webpack",
+  "description": "A Decky plugin to toggle touchscreen input on Steam Deck",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
@@ -15,11 +15,12 @@
   "keywords": [
     "decky",
     "plugin",
-    "plugin-template",
+    "touchscreen",
     "steam-deck",
-    "deck"
+    "deck",
+    "input"
   ],
-  "author": "You <you@you.tld>",
+  "author": "BruceU",
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/SteamDeckHomebrew/decky-plugin-template/issues"

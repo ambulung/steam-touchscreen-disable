@@ -2,114 +2,195 @@ import {
   ButtonItem,
   PanelSection,
   PanelSectionRow,
-  Navigation,
   staticClasses
 } from "@decky/ui";
 import {
-  addEventListener,
-  removeEventListener,
   callable,
   definePlugin,
-  toaster,
-  // routerHook
+  toaster
 } from "@decky/api"
-import { useState } from "react";
-import { FaShip } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { FaTabletAlt } from "react-icons/fa";
 
-// import logo from "../assets/logo.png";
-
-// This function calls the python function "add", which takes in two numbers and returns their sum (as a number)
-// Note the type annotations:
-//  the first one: [first: number, second: number] is for the arguments
-//  the second one: number is for the return value
-const add = callable<[first: number, second: number], number>("add");
-
-// This function calls the python function "start_timer", which takes in no arguments and returns nothing.
-// It starts a (python) timer which eventually emits the event 'timer_event'
-const startTimer = callable<[], void>("start_timer");
+// Callable functions for backend communication
+const toggleTouchscreen = callable<[], boolean>("toggle_touchscreen");
+const getTouchscreenStatus = callable<[], boolean>("get_touchscreen_status");
+const enableTouchscreen = callable<[], boolean>("enable_touchscreen");
+const disableTouchscreen = callable<[], boolean>("disable_touchscreen");
 
 function Content() {
-  const [result, setResult] = useState<number | undefined>();
+  const [isEnabled, setIsEnabled] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const onClick = async () => {
-    const result = await add(Math.random(), Math.random());
-    setResult(result);
+  // Load initial status
+  useEffect(() => {
+    loadTouchscreenStatus();
+  }, []);
+
+  const loadTouchscreenStatus = async () => {
+    try {
+      const status = await getTouchscreenStatus();
+      setIsEnabled(status);
+    } catch (error) {
+      console.error("Failed to load touchscreen status:", error);
+      toaster.toast({
+        title: "Error",
+        body: "Failed to load touchscreen status"
+      });
+    }
+  };
+
+  const handleToggle = async () => {
+    setIsLoading(true);
+    try {
+      const success = await toggleTouchscreen();
+      if (success) {
+        setIsEnabled(!isEnabled);
+        toaster.toast({
+          title: "Success",
+          body: `Touchscreen ${!isEnabled ? 'enabled' : 'disabled'}`
+        });
+      } else {
+        toaster.toast({
+          title: "Error",
+          body: "Failed to toggle touchscreen"
+        });
+      }
+    } catch (error) {
+      console.error("Toggle error:", error);
+      toaster.toast({
+        title: "Error",
+        body: "Failed to toggle touchscreen"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEnable = async () => {
+    setIsLoading(true);
+    try {
+      const success = await enableTouchscreen();
+      if (success) {
+        setIsEnabled(true);
+        toaster.toast({
+          title: "Success",
+          body: "Touchscreen enabled"
+        });
+      } else {
+        toaster.toast({
+          title: "Error",
+          body: "Failed to enable touchscreen"
+        });
+      }
+    } catch (error) {
+      console.error("Enable error:", error);
+      toaster.toast({
+        title: "Error",
+        body: "Failed to enable touchscreen"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDisable = async () => {
+    setIsLoading(true);
+    try {
+      const success = await disableTouchscreen();
+      if (success) {
+        setIsEnabled(false);
+        toaster.toast({
+          title: "Success",
+          body: "Touchscreen disabled"
+        });
+      } else {
+        toaster.toast({
+          title: "Error",
+          body: "Failed to disable touchscreen"
+        });
+      }
+    } catch (error) {
+      console.error("Disable error:", error);
+      toaster.toast({
+        title: "Error",
+        body: "Failed to disable touchscreen"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <PanelSection title="Panel Section">
+    <PanelSection title="Touchscreen Controls">
       <PanelSectionRow>
         <ButtonItem
           layout="below"
-          onClick={onClick}
+          onClick={handleToggle}
+          disabled={isLoading}
         >
-          {result ?? "Add two numbers via Python"}
+          {isLoading ? "Processing..." : `Toggle Touchscreen (${isEnabled ? 'Enabled' : 'Disabled'})`}
         </ButtonItem>
       </PanelSectionRow>
+      
       <PanelSectionRow>
         <ButtonItem
           layout="below"
-          onClick={() => startTimer()}
+          onClick={handleEnable}
+          disabled={isLoading || isEnabled}
         >
-          {"Start Python timer"}
+          Enable Touchscreen
+        </ButtonItem>
+      </PanelSectionRow>
+      
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below"
+          onClick={handleDisable}
+          disabled={isLoading || !isEnabled}
+        >
+          Disable Touchscreen
         </ButtonItem>
       </PanelSectionRow>
 
-      {/* <PanelSectionRow>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src={logo} />
+      <PanelSectionRow>
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center",
+          padding: "10px",
+          backgroundColor: isEnabled ? "#4CAF50" : "#f44336",
+          borderRadius: "8px",
+          margin: "10px 0"
+        }}>
+          <span style={{ 
+            color: "white", 
+            fontWeight: "bold",
+            fontSize: "16px"
+          }}>
+            Status: {isEnabled ? "ENABLED" : "DISABLED"}
+          </span>
         </div>
-      </PanelSectionRow> */}
-
-      {/*<PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => {
-            Navigation.Navigate("/decky-plugin-test");
-            Navigation.CloseSideMenus();
-          }}
-        >
-          Router
-        </ButtonItem>
-      </PanelSectionRow>*/}
+      </PanelSectionRow>
     </PanelSection>
   );
 };
 
 export default definePlugin(() => {
-  console.log("Template plugin initializing, this is called once on frontend startup")
-
-  // serverApi.routerHook.addRoute("/decky-plugin-test", DeckyPluginRouterTest, {
-  //   exact: true,
-  // });
-
-  // Add an event listener to the "timer_event" event from the backend
-  const listener = addEventListener<[
-    test1: string,
-    test2: boolean,
-    test3: number
-  ]>("timer_event", (test1, test2, test3) => {
-    console.log("Template got timer_event with:", test1, test2, test3)
-    toaster.toast({
-      title: "template got timer_event",
-      body: `${test1}, ${test2}, ${test3}`
-    });
-  });
+  console.log("Touchscreen Toggle plugin initializing")
 
   return {
     // The name shown in various decky menus
-    name: "Test Plugin",
+    name: "Touchscreen Toggle",
     // The element displayed at the top of your plugin's menu
-    titleView: <div className={staticClasses.Title}>Decky Example Plugin</div>,
+    titleView: <div className={staticClasses.Title}>Touchscreen Toggle</div>,
     // The content of your plugin's menu
     content: <Content />,
     // The icon displayed in the plugin list
-    icon: <FaShip />,
+    icon: <FaTabletAlt />,
     // The function triggered when your plugin unloads
     onDismount() {
-      console.log("Unloading")
-      removeEventListener("timer_event", listener);
-      // serverApi.routerHook.removeRoute("/decky-plugin-test");
+      console.log("Touchscreen Toggle plugin unloading")
     },
   };
 });
