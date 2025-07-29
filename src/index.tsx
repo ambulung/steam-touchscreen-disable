@@ -21,6 +21,7 @@ const disableTouchscreen = callable<[], boolean>("disable_touchscreen");
 function Content() {
   const [isEnabled, setIsEnabled] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   // Load initial status
   useEffect(() => {
@@ -31,16 +32,17 @@ function Content() {
     try {
       const status = await getTouchscreenStatus();
       setIsEnabled(status);
+      setIsInitialized(true);
     } catch (error) {
       console.error("Failed to load touchscreen status:", error);
-      toaster.toast({
-        title: "Error",
-        body: "Failed to load touchscreen status"
-      });
+      // Don't show error toast on initial load to prevent spam
+      setIsInitialized(true);
     }
   };
 
   const handleToggle = async () => {
+    if (!isInitialized) return;
+    
     setIsLoading(true);
     try {
       const success = await toggleTouchscreen();
@@ -68,6 +70,8 @@ function Content() {
   };
 
   const handleEnable = async () => {
+    if (!isInitialized) return;
+    
     setIsLoading(true);
     try {
       const success = await enableTouchscreen();
@@ -95,6 +99,8 @@ function Content() {
   };
 
   const handleDisable = async () => {
+    if (!isInitialized) return;
+    
     setIsLoading(true);
     try {
       const success = await disableTouchscreen();
@@ -120,6 +126,23 @@ function Content() {
       setIsLoading(false);
     }
   };
+
+  if (!isInitialized) {
+    return (
+      <PanelSection title="Touchscreen Controls">
+        <PanelSectionRow>
+          <div style={{ 
+            display: "flex", 
+            justifyContent: "center", 
+            alignItems: "center",
+            padding: "20px"
+          }}>
+            <span>Loading...</span>
+          </div>
+        </PanelSectionRow>
+      </PanelSection>
+    );
+  }
 
   return (
     <PanelSection title="Touchscreen Controls">

@@ -1,8 +1,8 @@
 {
   "name": "Touchscreen Toggle",
   "author": "BruceU",
-  "flags": ["debug", "_root"],
-  "api_version": 1,
+  "flags": ["debug", "_root", "root"],
+  "api_version": 2,
   "publish": {
     "tags": ["touchscreen", "input", "toggle"],
     "description": "Toggle touchscreen input on Steam Deck",
