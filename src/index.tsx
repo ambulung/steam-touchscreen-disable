@@ -1,15 +1,24 @@
 import {
   ButtonItem,
-  definePlugin,
   PanelSection,
   PanelSectionRow,
-  ServerAPI,
-  staticClasses,
-} from "decky-frontend-lib";
-import { VFC, useState, useEffect } from "react";
+  staticClasses
+} from "@decky/ui";
+import {
+  callable,
+  definePlugin,
+  toaster
+} from "@decky/api"
+import { useState, useEffect } from "react";
 import { FaTabletAlt } from "react-icons/fa";
 
-const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
+// Callable functions for backend communication
+const toggleTouchscreen = callable<[], boolean>("toggle_touchscreen");
+const getTouchscreenStatus = callable<[], boolean>("get_touchscreen_status");
+const enableTouchscreen = callable<[], boolean>("enable_touchscreen");
+const disableTouchscreen = callable<[], boolean>("disable_touchscreen");
+
+function Content() {
   const [isEnabled, setIsEnabled] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
@@ -21,13 +30,8 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
 
   const loadTouchscreenStatus = async () => {
     try {
-      const result = await serverAPI.callPluginMethod<{}, boolean>(
-        "get_touchscreen_status",
-        {}
-      );
-      if (result.success) {
-        setIsEnabled(result.result);
-      }
+      const status = await getTouchscreenStatus();
+      setIsEnabled(status);
       setIsInitialized(true);
     } catch (error) {
       console.error("Failed to load touchscreen status:", error);
@@ -40,25 +44,22 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     
     setIsLoading(true);
     try {
-      const result = await serverAPI.callPluginMethod<{}, boolean>(
-        "toggle_touchscreen",
-        {}
-      );
-      if (result.success && result.result) {
+      const success = await toggleTouchscreen();
+      if (success) {
         setIsEnabled(!isEnabled);
-        serverAPI.toaster.toast({
+        toaster.toast({
           title: "Success",
           body: `Touchscreen ${!isEnabled ? 'enabled' : 'disabled'}`
         });
       } else {
-        serverAPI.toaster.toast({
+        toaster.toast({
           title: "Error",
           body: "Failed to toggle touchscreen"
         });
       }
     } catch (error) {
       console.error("Toggle error:", error);
-      serverAPI.toaster.toast({
+      toaster.toast({
         title: "Error",
         body: "Failed to toggle touchscreen"
       });
@@ -72,25 +73,22 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     
     setIsLoading(true);
     try {
-      const result = await serverAPI.callPluginMethod<{}, boolean>(
-        "enable_touchscreen",
-        {}
-      );
-      if (result.success && result.result) {
+      const success = await enableTouchscreen();
+      if (success) {
         setIsEnabled(true);
-        serverAPI.toaster.toast({
+        toaster.toast({
           title: "Success",
           body: "Touchscreen enabled"
         });
       } else {
-        serverAPI.toaster.toast({
+        toaster.toast({
           title: "Error",
           body: "Failed to enable touchscreen"
         });
       }
     } catch (error) {
       console.error("Enable error:", error);
-      serverAPI.toaster.toast({
+      toaster.toast({
         title: "Error",
         body: "Failed to enable touchscreen"
       });
@@ -104,25 +102,22 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     
     setIsLoading(true);
     try {
-      const result = await serverAPI.callPluginMethod<{}, boolean>(
-        "disable_touchscreen",
-        {}
-      );
-      if (result.success && result.result) {
+      const success = await disableTouchscreen();
+      if (success) {
         setIsEnabled(false);
-        serverAPI.toaster.toast({
+        toaster.toast({
           title: "Success",
           body: "Touchscreen disabled"
         });
       } else {
-        serverAPI.toaster.toast({
+        toaster.toast({
           title: "Error",
           body: "Failed to disable touchscreen"
         });
       }
     } catch (error) {
       console.error("Disable error:", error);
-      serverAPI.toaster.toast({
+      toaster.toast({
         title: "Error",
         body: "Failed to disable touchscreen"
       });
@@ -203,15 +198,21 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   );
 };
 
-export default definePlugin((serverAPI: ServerAPI) => {
-  console.log("Touchscreen Toggle plugin initializing");
+export default definePlugin(() => {
+  console.log("Touchscreen Toggle plugin initializing")
 
   return {
-    title: <div className={staticClasses.Title}>Touchscreen Toggle</div>,
-    content: <Content serverAPI={serverAPI} />,
+    // The name shown in various decky menus
+    name: "Touchscreen Toggle",
+    // The element displayed at the top of your plugin's menu
+    titleView: <div className={staticClasses.Title}>Touchscreen Toggle</div>,
+    // The content of your plugin's menu
+    content: <Content />,
+    // The icon displayed in the plugin list
     icon: <FaTabletAlt />,
+    // The function triggered when your plugin unloads
     onDismount() {
-      console.log("Touchscreen Toggle plugin unloading");
+      console.log("Touchscreen Toggle plugin unloading")
     },
   };
 });
